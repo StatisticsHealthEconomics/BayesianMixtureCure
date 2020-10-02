@@ -18,12 +18,11 @@ data_list <-
     n = 2*n_obs,                 # number of observations
     t = c(times0, times1),       # observed times
     d = rep(1, 2*n_obs),         # censoring indicator (1 = observed, 0 = censored)
-    H = 1,                       # number of covariates
-    X = matrix(c(rep(0, n_obs),  # matrix of covariates (with n rows and H columns)
-                 rep(1, n_obs)),
-               ncol = 1),
-    mu_beta = 0,	               # mean of the covariates coefficients
-    sigma_beta = 1               # sd of the covariates coefficients
+    H = 2,                       # number of covariates
+    X = cbind(rep(1, 2*n_obs),
+              rep(0:1, each = n_obs)),  # matrix of covariates (with n rows and H columns)
+    mu_beta = c(0,0),	               # mean of the covariates coefficients
+    sigma_beta = c(1,1)              # sd of the covariates coefficients
   )
 
 
