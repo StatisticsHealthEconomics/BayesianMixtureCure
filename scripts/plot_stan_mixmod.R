@@ -1,7 +1,6 @@
 
-#
 # stan output plots
-#
+# regular mixture model
 
 
 library(ggplot2)
@@ -75,7 +74,7 @@ p1
 #          px1 = 1 - pexp(time, rate = rate1)) %>%
 #   melt(id.vars = "time",
 #        measure.vars = c("px0", "px1"))
-# 
+#
 # p1 +
 #   geom_line(data = dat_true, aes(x=time, y=value, group=variable),
 #             inherit.aes = FALSE, col = "red")
