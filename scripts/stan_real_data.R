@@ -7,7 +7,9 @@ library(rstan)
 library(shinystan)
 library(dplyr)
 
-raw_dat <- read.csv("C:/Users/Nathan/Documents/mixture cure model project/from Antonio/BMS_ICON_cure_modeling/MCM_15012020/Data/analytic_file.csv")
+raw_dat <-
+  read.csv(
+    "C:/Users/Nathan/Documents/mixture cure model project/from Antonio/BMS_ICON_cure_modeling/MCM_15012020/Data/analytic_file.csv")
 
 tx_dat <-
   raw_dat %>%
