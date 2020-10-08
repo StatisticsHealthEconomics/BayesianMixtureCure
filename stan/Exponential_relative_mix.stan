@@ -72,7 +72,7 @@ transformed parameters {
   vector[n] linpred0;
   vector[n] lambda0;
   // vector[n] linpred_bg;
-  // vector[n] lambda_bg;
+  vector[n] lambda_bg;
 
   linpred0 = X*beta0;
   // linpred_bg = X*beta_bg;
@@ -80,7 +80,8 @@ transformed parameters {
   //TODO: why is this not vectorised like everything else?
   for (i in 1:n) {
     lambda0[i] = exp(linpred0[i]);     // rate parameters
-    // lambda_bg[i] = exp(linpred_bg[i]);
+    // lambda_bg[i] = exp(linpred_bg[i]); // background survival with uncertainty
+    lambda_bg[i] = h_bg[i];      // _known_ point estimate for background survival
   }
 }
 
@@ -92,29 +93,33 @@ model {
 
   for (i in 1:n) {
 
-    // _known_ point estimate for background survival
-    // target += log_mix(curefrac,
-    //                   surv_exp_lpdf(t[i] | d[i], h_bg[i]),
-    //                   surv_exp_lpdf(t[i] | d[i], h_bg[i] + lambda0[i]));
-    // equivalently
-    target += log_sum_exp(log(curefrac)
-                          + surv_exp_lpdf(t[i] | d[i], h_bg[i]),
-                          log1m(curefrac)
-                          + surv_exp_lpdf(t[i] | d[i], h_bg[i] + lambda0[i]));
-
-
-    // // background survival with uncertainty
     // target += log_mix(curefrac,
     //                   surv_exp_lpdf(t[i] | d[i], lambda_bg[i]),
     //                   surv_exp_lpdf(t[i] | d[i], lambda_bg[i] + lambda0[i]));
+
+    // equivalently
+    target += log_sum_exp(log(curefrac)
+                          + surv_exp_lpdf(t[i] | d[i], lambda_bg[i]),
+                          log1m(curefrac)
+                          + surv_exp_lpdf(t[i] | d[i], lambda_bg[i] + lambda0[i]));
   }
 }
 
 generated quantities {
   real rate0;
-  // real rate1;
+  // real rate_bg;
+  vector[60] S_bg;
+  vector[60] S0;
+  vector[60] S_pred;
 
   rate0 = exp(beta0[1]);
-  // rate1 = exp(beta_bg[1]);
+  // rate_bg = exp(beta_bg[1]);
+
+  //TODO: how to use background?
+  // for (i in 1:60) {
+  //   S_bg[i] = Surv(i, rate_bg);
+  //   S0[i] = Surv(i, rate_bg + rate0);
+  //   S_pred[i] = curefrac*S_bg + (1 - curefrac)*S0;
+  // }
 }
 
