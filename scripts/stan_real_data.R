@@ -7,13 +7,14 @@ library(rstan)
 library(shinystan)
 library(dplyr)
 
-load("C:/Users/Nathan/Documents/R/mixture_cure_model/data/bg_hazards.RData")
+load("C:/Users/Nathan/Documents/R/mixture_cure_model/data/surv_input_data.RData")
 
 tx_dat <-
-  bg_hazards %>%
-  select(TRTA, pfs, pfs_event, PFS_rate) %>%
-  mutate(PFS_rate = ifelse(PFS_rate == 0, 0.00001, PFS_rate)) %>%
-  split(bg_hazards$TRTA)
+  surv_input_data %>%
+  select(TRTA, pfs, pfs_event, PFS_rate, PFSage) %>%
+  mutate(PFS_rate =
+           ifelse(PFS_rate == 0, 0.00001, PFS_rate)) %>% # replace 0
+  split(surv_input_data$TRTA)
 
 tx_name <- "IPILIMUMAB"
 
@@ -22,13 +23,19 @@ data_list <-
     n = nrow(tx_dat[[tx_name]]),
     t = tx_dat[[tx_name]]$pfs,
     d = tx_dat[[tx_name]]$pfs_event,
-    H = 1,
-    X = matrix(rep(1, nrow(tx_dat[[tx_name]])), ncol = 1),
-    mu_beta = 0,
-    sigma_beta = 1,
+    H = 2,
+    X = matrix(c(rep(1, nrow(tx_dat[[tx_name]])),
+               tx_dat[[tx_name]]$PFSage),
+               byrow = FALSE,
+               ncol = 2),
+    mu_beta = c(0,0),
+    sigma_beta = c(1,1),
+    mu_bg = c(-8.25, 0.066),
+    sigma_bg = c(0.01, 0.01),
     a_cf = 1,
-    b_cf = 1,
-    h_bg = tx_dat[[tx_name]]$PFS_rate)
+    b_cf = 1#,
+    # h_bg = tx_dat[[tx_name]]$PFS_rate
+  )
 
 rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
