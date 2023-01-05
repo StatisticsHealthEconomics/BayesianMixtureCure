@@ -28,18 +28,16 @@ data_list <-
                tx_dat[[tx_name]]$PFSage),
                byrow = FALSE,
                ncol = 2),
-    mu_beta = c(0.2, 0),
-    # mu_beta = c(0.3, 0),
-    sigma_beta = c(0.01, 0.1),
-    # sigma_beta = c(0.6, 0.1),
+    mu_beta = c(0.3, 0),
+    sigma_beta = c(0.6, 0.1),
     mu_bg = c(-8.25, 0.066),
     sigma_bg = c(0.01, 0.01),
     a_Q = -0.7,
     b_Q = 0.6,
     a_scale = log(0.9),
     b_scale = 0.1,
-    a_cf = 1,
-    b_cf = 1#,
+    a_cf = 0.8,
+    b_cf = 7#,
     # h_bg = tx_dat[[tx_name]]$PFS_rate
   )
 

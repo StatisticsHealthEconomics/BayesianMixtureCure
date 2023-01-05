@@ -122,7 +122,6 @@ model {
 }
 
 generated quantities {
-
   real mu;
   real scale;
   real Q;
