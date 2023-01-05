@@ -56,7 +56,7 @@ p1
 
 #################
 # using multimcm
-
+library(ggplot2)
 library(multimcm)
 
 # extend dimension for a single treatment
