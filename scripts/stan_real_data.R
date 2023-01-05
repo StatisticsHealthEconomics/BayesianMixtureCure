@@ -7,7 +7,7 @@ library(rstan)
 library(shinystan)
 library(dplyr)
 
-load("C:/Users/Nathan/Documents/R/mixture_cure_model/data/surv_input_data.RData")
+load("C:/Users/n8tha/Documents/R/bgfscure/data/surv_input_data.RData")
 
 tx_dat <-
   surv_input_data %>%

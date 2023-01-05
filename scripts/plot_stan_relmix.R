@@ -21,7 +21,7 @@ time_horizon <- 6
 dat <-
   data.frame(time = seq(0, time_horizon, length.out=100)) %>%
   mutate(rate0 = mean_rate0*time,
-         px0 = 1 - pexp(time, rate = rate0)) %>% 
+         px0 = 1 - pexp(time, rate = rate0)) %>%
   melt(id.vars = "time",
        measure.vars = "px0")
 
@@ -49,4 +49,25 @@ p1 <-
               alpha = 0.5)
 
 p1
+
+
+#################
+# using multimcm
+
+library(multimcm)
+
+# extend dimension for a single treatment
+fit_stan$S_pred <- array(fit_stan$S_pred, c(dim(fit_stan$S_pred), 1))
+
+S_dat <- multimcm:::prep_S_data(fit_stan, tx_idx = 1)
+
+ggplot(S_dat[[1]], aes(x = time, y = mean, group = type, colour = type)) +
+  geom_line() +
+  ylab("Survival") +
+  ylim(0, 1) +
+  geom_ribbon(aes(x = time, ymin = lower, ymax = upper, fill = type),
+              linetype = 0,
+              alpha = 0.2) +
+  theme_bw()
+
 

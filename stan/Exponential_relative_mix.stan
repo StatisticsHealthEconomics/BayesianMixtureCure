@@ -114,19 +114,18 @@ model {
 
 generated quantities {
   real rate0;
-  // real rate_bg;
+  real rate_bg;
   vector[60] S_bg;
-  vector[60] S0;
+  vector[60] S_0;
   vector[60] S_pred;
 
   rate0 = exp(beta0[1]);
-  // rate_bg = exp(beta_bg[1]);
+  rate_bg = exp(beta_bg[1]);
 
-  //TODO: how to use background?
-  // for (i in 1:60) {
-  //   S_bg[i] = Surv(i, rate_bg);
-  //   S0[i] = Surv(i, rate_bg + rate0);
-  //   S_pred[i] = curefrac*S_bg + (1 - curefrac)*S0;
-  // }
+  for (i in 1:60) {
+    S_bg[i] = Surv(i, rate_bg);
+    S_0[i] = Surv(i, rate_bg + rate0);
+    S_pred[i] = curefrac*S_bg[i] + (1 - curefrac)*S_0[i];
+  }
 }
 
