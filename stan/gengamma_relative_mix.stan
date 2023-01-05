@@ -103,7 +103,7 @@ parameters {
 transformed parameters {
   vector[n] linpred0;
   vector[n] linpred_bg;
-  vector[n] lambda0;
+  vector[n] mu;
   vector[n] lambda_bg;
 
   linpred0 = X*beta0;
