@@ -9,6 +9,9 @@ library(reshape2)
 
 fit_stan <- extract(stan_base)
 
+
+# plots
+
 plot(hist(fit_stan$curefrac,  breaks = 50))
 abline(v = mean(fit_stan$curefrac), col = "red")
 

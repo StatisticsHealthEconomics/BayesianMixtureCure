@@ -3,6 +3,9 @@
 
 functions {
 
+  ////////////////
+  // exponential
+
   //  log hazard
   real exp_log_h (real t, real rate) {
     real logh;
@@ -25,7 +28,22 @@ functions {
     return logS;
   }
 
-  real gengamma_Surv (real t, real rate) {
+  real exp_Surv(real t, real rate) {
+    real S;
+    S = exp(-rate * t);
+    return S;
+  }
+
+  real surv_exp_lpdf (real t, real d, real rate) {
+    real log_lik;
+    log_lik = d * exp_log_h(t, rate) + exp_log_S(t, rate);
+    return log_lik;
+  }
+
+  //////////////////////
+  // generalised gamma
+
+  real gen_gamma_Surv (real t, real mu, real sigma, real Q) {
     real Surv;
     real w = (log(t) - mu) / sigma;
     real qq = 1/(Q * Q);                    // shape (gamma)
@@ -39,16 +57,30 @@ functions {
     return Surv;
   }
 
-  real exp_Surv(real t, real rate) {
-    real S;
-    S = exp(-rate * t);
-    return S;
+  real gen_gamma_log_S(real t, real mu, real sigma, real Q) {
+    real log_S;
+    log_S = log(gen_gamma_Surv(t, mu, sigma, Q));
+    return log_S;
   }
 
-  real surv_exp_lpdf (real t, real d, real rate) {
+  real gen_gamma_lpdf(real t, real mu, real sigma, real Q) {
     real log_lik;
-    log_lik = d * exp_log_h(t, rate) + exp_log_S(t, rate);
+    real w;
+    w = (log(t) - mu)/sigma;
+    log_lik = -log(sigma*t) + log(fabs(Q)) + pow(Q, -2)*log(pow(Q, -2)) + pow(Q, -2)*(Q*w-exp(Q*w)) - lgamma(pow(Q, -2));
     return log_lik;
+  }
+
+  real gen_gamma_log_h(real t, real mu, real sigma, real Q) {
+    real log_h;
+    log_h = gen_gamma_lpdf(t | mu, sigma, Q) - gen_gamma_log_S(t, mu, sigma, Q);
+    return log_h;
+  }
+
+  real gen_gamma_haz(real t, real mu, real sigma, real Q) {
+    real haz;
+    haz = exp(gen_gamma_log_h(t, mu, sigma, Q));
+    return haz;
   }
 
   real surv_gen_gamma_lpdf(real t, real d, real mu, real sigma, real Q) {
@@ -109,7 +141,6 @@ transformed parameters {
   linpred0 = X*beta0;
   linpred_bg = X*beta_bg;
 
-  // rate parameters
   for (i in 1:n) {
     mu[i] = linpred0[i];
     lambda_bg[i] = exp(linpred_bg[i]); // background survival with uncertainty
@@ -130,12 +161,12 @@ model {
     target += log_sum_exp(log(curefrac)
               + surv_exp_lpdf(t[i] | d[i], lambda_bg[i]),
               log1m(curefrac)
-              + joint_exp_gengamma_lpdf(t[i] | d[i], mu[i], scale, Q, lambda_bg[i]);
+              + joint_exp_gengamma_lpdf(t[i] | d[i], mu[i], scale, Q, lambda_bg[i]));
   }
 }
 
 generated quantities {
-  real m0;
+  real mu0;
   real rate_bg;
   vector[60] S_bg;
   vector[60] S_0;
@@ -146,7 +177,7 @@ generated quantities {
 
   for (i in 1:60) {
     S_bg[i] = exp_Surv(i, rate_bg);
-    S_0[i] = gengamma_Surv(i, mu0, sigma, Q);
+    S_0[i] = gen_gamma_Surv(i, mu0, scale, Q);
     S_pred[i] = curefrac*S_bg[i] + (1 - curefrac)*S_bg[i]*S_0[i];
   }
 }

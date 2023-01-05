@@ -1,7 +1,7 @@
 
 # run stan mixture cure model
 # generalised gamma distribution
-#
+
 
 library(rstan)
 library(shinystan)
@@ -44,12 +44,12 @@ data_list <-
 rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
 
-n_iter <- 2000#0
-n_warmup <- 1000#0
+n_iter <- 500#0
+n_warmup <- 100#0
 
 stan_base <-
   stan(
-    file = here::here("stan", "gengamma_relative_mix.stan"),
+    file = here::here("stan", "gengamma_mixture_cure_model.stan"),
     data = data_list,
     warmup = n_warmup,
     iter = n_iter,
