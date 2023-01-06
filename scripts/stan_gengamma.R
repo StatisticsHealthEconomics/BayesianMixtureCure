@@ -7,7 +7,7 @@ library(rstan)
 library(shinystan)
 library(dplyr)
 
-load("C:/Users/n8tha/Documents/R/bgfscure/data/surv_input_data.RData")
+load("../bgfscure/data/surv_input_data.RData")
 
 tx_dat <-
   surv_input_data %>%
@@ -30,15 +30,16 @@ data_list <-
                ncol = 2),
     mu_beta = c(0.3, 0),
     sigma_beta = c(0.6, 0.1),
-    mu_bg = c(-8.25, 0.066),
-    sigma_bg = c(0.01, 0.01),
-    a_Q = -0.7,
+    a_Q = -0.2,
     b_Q = 0.6,
-    a_scale = log(0.9),
+    a_scale = log(1.5),
     b_scale = 0.1,
-    a_cf = 0.8,
-    b_cf = 7#,
-    # h_bg = tx_dat[[tx_name]]$PFS_rate
+    a_cf = 3,
+    b_cf = 12,
+    ## background
+    # mu_bg = c(-8.25, 0.066),
+    # sigma_bg = c(0.01, 0.01),
+    h_bg = tx_dat[[tx_name]]$PFS_rate/12
   )
 
 rstan_options(auto_write = TRUE)

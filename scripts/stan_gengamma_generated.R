@@ -1,11 +1,14 @@
 
 # run stan mixture cure model
 # generalised gamma distribution
+# generating directly from priors
 
 
 library(rstan)
 library(shinystan)
 library(dplyr)
+library(ggplot2)
+
 
 data_list <-
   list(
