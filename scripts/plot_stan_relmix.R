@@ -56,6 +56,7 @@ p1
 
 #################
 # using multimcm
+
 library(ggplot2)
 library(multimcm)
 
@@ -64,13 +65,27 @@ fit_stan$S_pred <- array(fit_stan$S_pred, c(dim(fit_stan$S_pred), 1))
 
 S_dat <- multimcm:::prep_S_data(fit_stan, tx_idx = 1)
 
-ggplot(S_dat[[1]], aes(x = time, y = mean, group = type, colour = type)) +
+gg <-
+  ggplot(S_dat[[1]], aes(x = time, y = mean, group = type, colour = type)) +
   geom_line() +
   ylab("Survival") +
   ylim(0, 1) +
   geom_ribbon(aes(x = time, ymin = lower, ymax = upper, fill = type),
               linetype = 0,
               alpha = 0.2) +
+  scale_y_continuous(breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1)) +
   theme_bw()
+
+## kaplan-meier
+library(survival)
+
+km <- survfit(Surv(data_list$t, data_list$d) ~ 1)
+km_data <- data.frame(surv = km$surv,
+                      time = km$time)
+
+gg + geom_step(aes(x = time, y = surv),
+          linewidth = 1,
+          data = km_data,
+          inherit.aes = FALSE)
 
 

@@ -18,7 +18,7 @@ data_list <-
     b_mu = 0.6,
     a_Q = -0.2,
     b_Q = 0.6,
-    a_scale = log(1.5),
+    a_scale = log(0.5),
     b_scale = 0.1,
     N_samples = 1)
 
@@ -50,5 +50,6 @@ ggplot(S_dat[[1]], aes(x = time, y = mean, group = type, colour = type)) +
   geom_ribbon(aes(x = time, ymin = lower, ymax = upper, fill = type),
               linetype = 0,
               alpha = 0.2) +
-  theme_bw()
+  theme_bw() +
+  xlim(0,10)
 
