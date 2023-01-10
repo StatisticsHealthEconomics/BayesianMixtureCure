@@ -60,6 +60,8 @@ p1
 library(ggplot2)
 library(multimcm)
 
+fit_stan <- extract(stan_base)
+
 # extend dimension for a single treatment
 fit_stan$S_pred <- array(fit_stan$S_pred, c(dim(fit_stan$S_pred), 1))
 
