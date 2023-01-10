@@ -88,6 +88,7 @@ km_data <- data.frame(surv = km$surv,
 gg + geom_step(aes(x = time, y = surv),
           linewidth = 1,
           data = km_data,
-          inherit.aes = FALSE)
+          inherit.aes = FALSE) +
+  xlim(0,60)
 
 

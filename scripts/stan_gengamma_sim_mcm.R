@@ -1,31 +1,40 @@
 
 # run stan mixture cure model
+# with simulated data
 # generalised gamma distribution
 
 
 library(rstan)
 library(shinystan)
 library(dplyr)
+library(flexsurv)
+library(survival)
 
-load("../bgfscure/data/surv_input_data.RData")
+n <- 1000
+x <- rnorm(n)
+loc <- 2 + 0.2*x
+cf <- 2/14
 
-tx_dat <-
-  surv_input_data %>%
-  select(TRTA, pfs, pfs_event, PFS_rate, PFSage) %>%
-  mutate(PFS_rate =
-           ifelse(PFS_rate == 0, 0.00001, PFS_rate)) %>% # replace 0
-  split(surv_input_data$TRTA)
+dat <- data.frame(
+  t_gg = flexsurv::rgengamma(n, mu = loc, sigma = log(1.5), Q = -0.2),
+  t_exp = rexp(n, 0.001),
+  cure = runif(n) < cf) |>
+  mutate(t = ifelse(cure, t_exp, pmin(t_exp, t_gg)),
+         d = 1,
+         x = as.numeric(x))
 
-tx_name <- "IPILIMUMAB"
+survfit(Surv(t, d)~1, data = dat) |> plot(xlim = c(0,50))
+survfit(Surv(t_gg, d)~1, data = dat) |> lines(col = "red")
+survfit(Surv(t_exp, d)~1, data = dat) |> lines(col = "green")
+
 
 data_list <-
   list(
-    n = nrow(tx_dat[[tx_name]]),
-    t = tx_dat[[tx_name]]$pfs,
-    d = tx_dat[[tx_name]]$pfs_event,
+    n = n,
+    t = dat$t,
+    d = dat$d,
     H = 2,
-    X = matrix(c(rep(1, nrow(tx_dat[[tx_name]])),
-               scale(tx_dat[[tx_name]]$PFSage)),
+    X = matrix(c(rep(1, n), x),
                byrow = FALSE,
                ncol = 2),
     mu_beta = c(0.3, 0),
@@ -36,11 +45,7 @@ data_list <-
     b_scale = 0.1,
     a_cf = 2,
     b_cf = 12,
-    ## background
-    # mu_bg = c(-8.25, 0.066),
-    # sigma_bg = c(0.01, 0.01),
-    h_bg = tx_dat[[tx_name]]$PFS_rate/12
-  )
+    h_bg = rep(0.001, n))
 
 rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
