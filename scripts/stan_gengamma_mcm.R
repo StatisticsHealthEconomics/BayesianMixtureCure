@@ -32,7 +32,7 @@ data_list <-
     sigma_beta = c(0.8, 0.2),
     a_Q = -0.2,
     b_Q = 0.6,
-    a_scale = log(0.7),
+    a_scale = log(1.0),
     b_scale = 0.1,
     a_cf = 2,
     b_cf = 12,
