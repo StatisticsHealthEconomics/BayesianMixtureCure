@@ -17,7 +17,7 @@ cf <- 2/14
 
 dat <- data.frame(
   t_gg = flexsurv::rgengamma(n, mu = loc, sigma = log(1.5), Q = -0.2),
-  t_exp = rexp(n, 0.001),
+  t_exp = rexp(n, rate = 0.001),
   cure = runif(n) < cf) |>
   mutate(t = ifelse(cure, t_exp, pmin(t_exp, t_gg)),
          d = 1,
@@ -26,7 +26,6 @@ dat <- data.frame(
 survfit(Surv(t, d)~1, data = dat) |> plot(xlim = c(0,50))
 survfit(Surv(t_gg, d)~1, data = dat) |> lines(col = "red")
 survfit(Surv(t_exp, d)~1, data = dat) |> lines(col = "green")
-
 
 data_list <-
   list(
