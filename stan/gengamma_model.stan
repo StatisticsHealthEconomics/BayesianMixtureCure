@@ -83,6 +83,9 @@ functions {
     return haz;
   }
 
+##TODO: check with survHE is this right?
+## https://github.com/n8thangreen/survHE/blob/main/src/stan_files/GenGamma.stan
+##      is censoring correct? is there are log(0)??
   real surv_gen_gamma_lpdf(real t, real d, real mu, real sigma, real Q) {
     // rescale the distribution accounting for right censoring
     real log_lik;
@@ -98,6 +101,13 @@ functions {
     real log_lik;
     log_lik = d * log(exp_haz(t, rate) + gen_gamma_haz(t, mu, scale, Q)) +
               exp_log_S(t, rate) + gen_gamma_log_S(t, mu, scale, Q);
+    return log_lik;
+  }
+
+## this should give the same results as surv_gen_gamma_lpdf. does it?
+  real gengamma_lpdf(real t, real d, real mu, real scale, real Q) {
+    real log_lik;
+    log_lik = d * log(gen_gamma_haz(t, mu, scale, Q)) + gen_gamma_log_S(t, mu, scale, Q);
     return log_lik;
   }
 }
@@ -159,15 +169,7 @@ model {
   curefrac ~ beta(a_cf, b_cf);
 
   for (i in 1:n) {
-    // joint survival
-    target += log_sum_exp(log(curefrac)
-                        + exp_log_S(t[i], lambda_bg[i]),
-                        log1m(curefrac)
-                        + exp_log_S(t[i], lambda_bg[i]) + gen_gamma_log_S(t[i], mu[i], scale, Q));
-    // joint hazard
-    target += d[i] * log_sum_exp(log(lambda_bg[i]),
-                                 log(1 - curefrac) + gen_gamma_lpdf(t[i] | mu[i], scale, Q) -
-                                  log(curefrac + (1 - curefrac)*gen_gamma_Surv(t[i], mu[i], scale, Q)));
+    target += joint_exp_gengamma_lpdf(t[i] | d[i], mu[i], scale, Q, lambda_bg[i]));
   }
 }
 
@@ -197,8 +199,8 @@ generated quantities {
   // vector pcf;
   //
   // for (j in 1:n) {
-  //   y_gg[j] = gen_gamma_rng(mu[j], scale, Q);    // how to do this?
-  //   y_exp[j] = exponential_rng(lambda_bg[j]j);
+  //   y_gg[j] = gen_gamma_rng(mu[j], scale, Q);
+  //   y_exp[j] = exponential_rng(lambda_bg[j]j);    // how to do this?
   //   pcf[j] = bernoulli_rng(curefrac)
   //   y_tilde[j] = y_exp[j]*pcf[j] + y_gg[j]*(1-pcf[j]);
   // }

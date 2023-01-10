@@ -30,11 +30,11 @@ data_list <-
                ncol = 2),
     mu_beta = c(0,0),
     sigma_beta = c(1,1),
-    mu_bg = c(-8.25, 0.066),
-    sigma_bg = c(0.01, 0.01),
+    # mu_bg = c(-8.25, 0.066),
+    # sigma_bg = c(0.01, 0.01),
     a_cf = 3,
-    b_cf = 12#,
-    # h_bg = tx_dat[[tx_name]]$PFS_rate
+    b_cf = 12,
+    h_bg = tx_dat[[tx_name]]$PFS_rate/12
   )
 
 rstan_options(auto_write = TRUE)
