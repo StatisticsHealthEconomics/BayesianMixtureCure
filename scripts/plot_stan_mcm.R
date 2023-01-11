@@ -82,6 +82,8 @@ gg <-
 library(survival)
 
 km <- survfit(Surv(data_list$t, data_list$d) ~ 1)
+# km <- survfit(Surv(c(data_list$t_unc, data_list$t_cens), c(rep(1,data_list$n_unc), rep(0,data_list$n_cens))) ~ 1)
+# km <- survfit(Surv(dat$t, dat$d) ~ 1) |> plot()
 km_data <- data.frame(surv = km$surv,
                       time = km$time)
 
@@ -89,6 +91,6 @@ gg + geom_step(aes(x = time, y = surv),
           linewidth = 1,
           data = km_data,
           inherit.aes = FALSE) +
-  xlim(0,60)
+  xlim(0,70)
 
 

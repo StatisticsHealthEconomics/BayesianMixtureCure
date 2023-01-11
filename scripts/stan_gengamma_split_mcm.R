@@ -54,8 +54,8 @@ stan_base <-
     file = here::here("stan", "gengamma_split_mixture_cure_model.stan"),
     data = data_list,
     control = list(adapt_delta = 0.99,
-                   max_treedepth = 12,
-                   stepsize = 0.5),
+                   stepsize = 0.005,
+                   max_treedepth = 100),
     warmup = n_warmup,
     iter = n_iter,
     chains = 1)

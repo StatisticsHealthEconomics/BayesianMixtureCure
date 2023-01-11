@@ -1,7 +1,7 @@
 
 # run stan mixture cure model
-# real-life dataset
-#
+# log normal distribution
+
 
 library(rstan)
 library(shinystan)
@@ -25,34 +25,33 @@ data_list <-
     d = tx_dat[[tx_name]]$pfs_event,
     H = 2,
     X = matrix(c(rep(1, nrow(tx_dat[[tx_name]])),
-               tx_dat[[tx_name]]$PFSage),
+               scale(tx_dat[[tx_name]]$PFSage)),
                byrow = FALSE,
                ncol = 2),
-    mu_beta = c(0,0),
-    sigma_beta = c(1,1),
-    # mu_bg = c(-8.25, 0.066),
-    # sigma_bg = c(0.01, 0.01),
-    a_cf = 3,
+    mu_beta = c(0.3, 0),
+    sigma_beta = c(0.8, 0.2),
+    a_scale = 0.5,
+    b_scale = 0.1,
+    a_cf = 2,
     b_cf = 12,
-    h_bg = tx_dat[[tx_name]]$PFS_rate/12
-  )
+    h_bg = tx_dat[[tx_name]]$PFS_rate/12)
 
 rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
-# stan_rdump(c("n_obs", "y"), file = "mix.data.R")
 
 n_iter <- 500#0
 n_warmup <- 100#0
 
 stan_base <-
   stan(
-    file = here::here("stan", "Exponential_mcm.stan"),
+    file = here::here("stan", "lognormal_mixture_cure_model.stan"),
     data = data_list,
+    control = list(adapt_delta = 0.95,
+                   max_treedepth = 10),
     warmup = n_warmup,
-    # control = list(adapt_delta = 0.9,
-    #                max_treedepth = 20),
     iter = n_iter,
     chains = 1)
 
 stan_base
+
 
