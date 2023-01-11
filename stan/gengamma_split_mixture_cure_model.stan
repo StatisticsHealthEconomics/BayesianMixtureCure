@@ -1,31 +1,40 @@
 // generalised gamma survival mixture cure model
-// relative survival
+// splitting up the censored and non-censored likelihood parts
 
 functions {
 
   ////////////////
-    // exponential
+  // exponential
 
-  //  log hazard
   real exp_log_h (real t, real rate) {
     real logh;
     logh = log(rate);
     return logh;
   }
 
-  // exponential distribution hazard
   real exp_haz (real t, real rate) {
     real h;
     h = rate;
     return h;
   }
 
-  // exponential distribution log survival
   // inbuilt exponential_lccdf(y | beta)
   real exp_log_S (real t, real rate) {
     real logS;
     logS = -rate * t;
     return logS;
+  }
+
+  real exp_pdf(real t, real rate) {
+    real x;
+    x = rate*exp(-rate * t);
+    return x;
+  }
+
+  real exp_lpdf(real t, real rate) {
+    real x;
+    x = log(rate) - (rate * t);
+    return x;
   }
 
   real exp_Surv(real t, real rate) {
@@ -41,7 +50,7 @@ functions {
   }
 
   //////////////////////
-    // generalised gamma
+  // generalised gamma
 
   real gen_gamma_Surv (real t, real mu, real sigma, real Q) {
     real Surv;
@@ -71,6 +80,12 @@ functions {
     return log_lik;
   }
 
+  real gen_gamma_pdf(real t, real mu, real sigma, real Q) {
+    real x;
+    x = exp(gen_gamma_lpdf(t | mu, sigma, Q));
+    return x;
+  }
+
   real gen_gamma_log_h(real t, real mu, real sigma, real Q) {
     real log_h;
     log_h = gen_gamma_lpdf(t | mu, sigma, Q) - gen_gamma_log_S(t, mu, sigma, Q);
@@ -97,24 +112,26 @@ functions {
   real joint_exp_gengamma_lpdf(real t, real d, real mu, real scale, real Q, real rate) {
     real log_lik;
     log_lik = d * log(exp_haz(t, rate) + gen_gamma_haz(t, mu, scale, Q)) +
-      exp_log_S(t, rate) + gen_gamma_log_S(t, mu, scale, Q);
+              exp_log_S(t, rate) + gen_gamma_log_S(t, mu, scale, Q);
     return log_lik;
   }
 }
 
 data {
-  int<lower=0> n;             // number of observations
-  vector[n] t;                // observed times
-  vector[n] d;                // censoring indicator (1 = observed, 0 = censored)
+  int<lower=0> N;             // number of observations
+  int<lower=0> n_cens;
+  int<lower=0> n_unc;
+  vector[n_cens] t_cens;           // observed times
+  vector[n_unc] t_unc;
+  int<lower=1> cens_idx[n_cens];      // censored index
+  int<lower=1> unc_idx[n_unc];
   int H;                      // number of covariates
-  matrix[n,H] X;              // matrix of covariates (with n rows and H columns)
+  matrix[N,H] X;              // matrix of covariates (with n rows and H columns)
 
   vector[H] mu_beta;
   vector<lower=0> [H] sigma_beta;
 
-  // vector[H] mu_bg;            //  background, all-cause mortality
-  // vector<lower=0> [H] sigma_bg;
-  vector[n] h_bg;             // fixed hazard
+  vector[N] h_bg;             // fixed hazard
 
   real a_cf;                  // cure fraction ~ Beta(a,b)
   real b_cf;
@@ -127,47 +144,47 @@ data {
 
 parameters {
   vector[H] beta0;         // coefficients in linear predictor (including intercept)
-  // vector[H] beta_bg;
   real<lower=0, upper=1> curefrac;
   real Q;
   real<lower=0> scale;
 }
 
 transformed parameters {
-  vector[n] linpred0;
-  // vector[n] linpred_bg;
-  vector[n] mu;
-  vector[n] lambda_bg;
+  vector[N] linpred0;
+  vector[N] mu;
+  vector[N] lambda_bg;
 
   linpred0 = X*beta0;
-  // linpred_bg = X*beta_bg;
 
-  for (i in 1:n) {
+  for (i in 1:N) {
     mu[i] = linpred0[i];
-    // lambda_bg[i] = exp(linpred_bg[i]); // background survival with uncertainty
     lambda_bg[i] = h_bg[i];           // _known_ point estimate for background survival
   }
 }
 
 model {
   beta0 ~ normal(mu_beta, sigma_beta);
-  // beta_bg ~ normal(mu_bg, sigma_bg);
 
   scale ~ lognormal(a_scale, b_scale);
   Q ~ normal(a_Q, b_Q);
 
   curefrac ~ beta(a_cf, b_cf);
 
-  for (i in 1:n) {
-    // joint survival
+  if (n_cens > 0) {
+    for (i in 1:n_cens) {
+      target += log_sum_exp(log(curefrac)
+                        + exp_log_S(t_cens[i], lambda_bg[cens_idx[i]]),
+                        log1m(curefrac)
+                        + exp_log_S(t_cens[i], lambda_bg[cens_idx[i]]) + gen_gamma_log_S(t_cens[i], mu[cens_idx[i]], scale, Q));
+    }
+  }
+
+  for (i in 1:n_unc) {
     target += log_sum_exp(log(curefrac)
-                          + exp_log_S(t[i], lambda_bg[i]),
-                          log1m(curefrac)
-                          + exp_log_S(t[i], lambda_bg[i]) + gen_gamma_log_S(t[i], mu[i], scale, Q));
-    // joint hazard
-    target += d[i] * log_sum_exp(log(lambda_bg[i]),
-                                 log(1 - curefrac) + gen_gamma_lpdf(t[i] | mu[i], scale, Q) -
-                                   log(curefrac + (1 - curefrac)*gen_gamma_Surv(t[i], mu[i], scale, Q)));
+                        + exp_lpdf(t_unc[i] | lambda_bg[unc_idx[i]]),
+                        log1m(curefrac)
+                        + log(gen_gamma_pdf(t_unc[i], mu[unc_idx[i]], scale, Q)*exp_Surv(t_unc[i], lambda_bg[unc_idx[i]]) +
+                              exp_pdf(t_unc[i], lambda_bg[unc_idx[i]])*gen_gamma_Surv(t_unc[i], mu[unc_idx[i]], scale, Q)));
   }
 }
 
@@ -180,7 +197,6 @@ generated quantities {
 
   mu0 = beta0[1];
 
-  // rate_bg = exp(beta_bg[1]);
   rate_bg = mean(h_bg);
 
   for (i in 1:60) {
@@ -188,19 +204,5 @@ generated quantities {
     S_0[i] = gen_gamma_Surv(i, mu0, scale, Q);
     S_pred[i] = curefrac*S_bg[i] + (1 - curefrac)*S_bg[i]*S_0[i];
   }
-
-  //TODO:
-    // // posterior predicted values
-  // vector y_gg;
-  // vector y_exp;
-  // vector y_tilde;
-  // vector pcf;
-  //
-    // for (j in 1:n) {
-      //   y_gg[j] = gen_gamma_rng(mu[j], scale, Q);    // how to do this?
-        //   y_exp[j] = exponential_rng(lambda_bg[j]j);
-        //   pcf[j] = bernoulli_rng(curefrac)
-        //   y_tilde[j] = y_exp[j]*pcf[j] + y_gg[j]*(1-pcf[j]);
-        // }
 }
 
