@@ -60,6 +60,8 @@ p1
 library(ggplot2)
 library(multimcm)
 
+fit_stan <- extract(stan_base)
+
 # extend dimension for a single treatment
 fit_stan$S_pred <- array(fit_stan$S_pred, c(dim(fit_stan$S_pred), 1))
 
@@ -86,6 +88,7 @@ km_data <- data.frame(surv = km$surv,
 gg + geom_step(aes(x = time, y = surv),
           linewidth = 1,
           data = km_data,
-          inherit.aes = FALSE)
+          inherit.aes = FALSE) +
+  xlim(0,60)
 
 

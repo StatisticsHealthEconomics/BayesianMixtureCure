@@ -120,7 +120,7 @@ model {
                         + log_S(t[i], lambda_bg[i]) + log_S(t[i], lambda0[i]));
     // joint hazard
     target += d[i] * log_sum_exp(log(lambda_bg[i]),
-                                 log(1 - curefrac) + exp_lpdf(t[i], lambda0[i]) -
+                                 log(1 - curefrac) + exp_lpdf(t[i] | lambda0[i]) -
                                   log(curefrac + (1 - curefrac)*Surv(t[i], lambda0[i])));
   }
 }

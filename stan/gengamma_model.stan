@@ -109,7 +109,6 @@ model {
 
 generated quantities {
   real mu0;
-  real rate_bg;
   vector[60] S_pred;
 
   mu0 = beta0[1];
